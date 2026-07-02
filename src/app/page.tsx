@@ -1,6 +1,7 @@
 import Navbar from "@/components/layout/Navbar";
 import FeaturedCollections from "@/components/home/FeaturedCollections";
 import BestSellers from "@/components/home/BestSellers";
+import CustomerReviews from "@/components/home/CustomerReviews";
 
 export default function Home() {
   return (
@@ -118,6 +119,8 @@ export default function Home() {
 
         {/* Best Sellers */}
         <BestSellers />
+
+        <CustomerReviews />
 
       </main>
     </>
