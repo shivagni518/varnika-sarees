@@ -2,6 +2,9 @@ import Navbar from "@/components/layout/Navbar";
 import FeaturedCollections from "@/components/home/FeaturedCollections";
 import BestSellers from "@/components/home/BestSellers";
 import CustomerReviews from "@/components/home/CustomerReviews";
+import WhyChooseUs from "@/components/home/WhyChooseUs";
+import Newsletter from "@/components/home/Newsletter";
+import Footer from "@/components/layout/Footer";
 
 export default function Home() {
   return (
@@ -121,6 +124,10 @@ export default function Home() {
         <BestSellers />
 
         <CustomerReviews />
+        <WhyChooseUs />
+        <Newsletter />
+        <div className="h-px bg-[#D4AF37]/30"></div>
+<Footer />
 
       </main>
     </>

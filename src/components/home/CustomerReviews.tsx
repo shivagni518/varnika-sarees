@@ -6,21 +6,21 @@ const reviews = [
     location: "Bengaluru",
     rating: 5,
     review:
-      "The silk saree quality exceeded my expectations. Beautiful craftsmanship and timely delivery.",
+      " ❝ The silk saree quality exceeded my expectations. Beautiful craftsmanship and timely delivery. ❞ ",
   },
   {
     name: "Ananya Rao",
     location: "Mysuru",
     rating: 5,
     review:
-      "Absolutely loved the bridal collection. The fabric and design were elegant and premium.",
+      " ❝ Absolutely loved the bridal collection. The fabric and design were elegant and premium. ❞ ",
   },
   {
     name: "Sneha Patel",
     location: "Mumbai",
     rating: 5,
     review:
-      "Shopping was seamless, and the saree looked exactly like the photos. Highly recommended!",
+      " ❝ Shopping was seamless, and the saree looked exactly like the photos. Highly recommended! ❞ ",
   },
 ];
 
@@ -37,6 +37,7 @@ export default function CustomerReviews() {
           <h2 className="font-[var(--font-playfair)] text-5xl font-bold text-[#7B1E3A] mt-4">
             What Our Customers Say
           </h2>
+            <div className="w-24 h-1 bg-[#D4AF37] rounded-full mx-auto mt-5 mb-5"></div>
 
           <p className="text-gray-600 mt-4">
             Trusted by thousands of happy customers across India.
@@ -48,7 +49,7 @@ export default function CustomerReviews() {
           {reviews.map((review, index) => (
             <div
               key={index}
-              className="bg-[#FFF8F0] rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300"
+              className="bg-[#FFF8F0] rounded-3xl p-10 shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
             >
               <div className="flex mb-4">
                 {[...Array(review.rating)].map((_, i) => (
@@ -60,8 +61,8 @@ export default function CustomerReviews() {
                 ))}
               </div>
 
-              <p className="text-gray-700 leading-7 italic">
-                "{review.review}"
+              <p className="text-gray-700 leading-8 italic">
+                {review.review}
               </p>
 
               <div className="mt-8">
