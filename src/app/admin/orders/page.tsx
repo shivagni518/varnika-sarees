@@ -1,16 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
 import {
   ArrowLeft,
-  ChevronDown,
   Eye,
   Package,
   Search,
@@ -23,6 +17,10 @@ import {
   type OrderStatus,
 } from "@/store/orderStore";
 
+/* =========================================================
+   ORDER STATUSES
+========================================================= */
+
 const statuses: OrderStatus[] = [
   "Confirmed",
   "Processing",
@@ -30,7 +28,15 @@ const statuses: OrderStatus[] = [
   "Delivered",
 ];
 
+/* =========================================================
+   ADMIN ORDERS PAGE
+========================================================= */
+
 export default function AdminOrdersPage() {
+  /* =========================================================
+     ORDER STORE
+  ========================================================= */
+
   const orders = useOrderStore(
     (state) => state.orders
   );
@@ -39,31 +45,22 @@ export default function AdminOrdersPage() {
     (state) => state.updateOrderStatus
   );
 
+  /* =========================================================
+     SEARCH
+  ========================================================= */
+
   const [search, setSearch] = useState("");
+
+  /* =========================================================
+     STATUS FILTER
+  ========================================================= */
 
   const [statusFilter, setStatusFilter] =
     useState<OrderStatus | "All">("All");
 
-  /* =====================================================
-     FILTER DROPDOWN
-  ===================================================== */
-
-  const [statusFilterOpen, setStatusFilterOpen] =
-    useState(false);
-
-  const statusFilterRef =
-    useRef<HTMLDivElement>(null);
-
-  /* =====================================================
-     ORDER STATUS DROPDOWN
-  ===================================================== */
-
-  const [openOrderStatus, setOpenOrderStatus] =
-    useState<string | null>(null);
-
-  /* =====================================================
+  /* =========================================================
      FILTER ORDERS
-  ===================================================== */
+  ========================================================= */
 
   const filteredOrders = useMemo(() => {
     const searchValue = search
@@ -92,109 +89,83 @@ export default function AdminOrdersPage() {
         matchesStatus
       );
     });
-  }, [orders, search, statusFilter]);
+  }, [
+    orders,
+    search,
+    statusFilter,
+  ]);
 
-  /* =====================================================
-     CLOSE FILTER DROPDOWN WHEN CLICKING OUTSIDE
-  ===================================================== */
-
-  useEffect(() => {
-    const handleClickOutside = (
-      event: MouseEvent
-    ) => {
-      if (
-        statusFilterRef.current &&
-        !statusFilterRef.current.contains(
-          event.target as Node
-        )
-      ) {
-        setStatusFilterOpen(false);
-      }
-    };
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-    };
-  }, []);
-
-  /* =====================================================
-     CLOSE ORDER STATUS DROPDOWNS
-  ===================================================== */
-
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setOpenOrderStatus(null);
-    };
-
-    if (openOrderStatus !== null) {
-      document.addEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-    }
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-    };
-  }, [openOrderStatus]);
-
-  /* =====================================================
+  /* =========================================================
      CLEAR FILTERS
-  ===================================================== */
+  ========================================================= */
 
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("All");
-    setStatusFilterOpen(false);
   };
 
   const hasFilters =
     search.trim() !== "" ||
     statusFilter !== "All";
 
-  /* =====================================================
-     STATUS COLOR
-  ===================================================== */
+  /* =========================================================
+     STATUS COLORS
+  ========================================================= */
 
   const getStatusClasses = (
     status: OrderStatus
   ) => {
-    if (status === "Confirmed") {
-      return "border-green-200 bg-green-50 text-green-700";
-    }
+    switch (status) {
+      case "Confirmed":
+        return "border-green-200 bg-green-50 text-green-700";
 
-    if (status === "Processing") {
-      return "border-blue-200 bg-blue-50 text-blue-700";
-    }
+      case "Processing":
+        return "border-blue-200 bg-blue-50 text-blue-700";
 
-    if (status === "Shipped") {
-      return "border-orange-200 bg-orange-50 text-orange-700";
-    }
+      case "Shipped":
+        return "border-orange-200 bg-orange-50 text-orange-700";
 
-    return "border-purple-200 bg-purple-50 text-purple-700";
+      case "Delivered":
+        return "border-purple-200 bg-purple-50 text-purple-700";
+
+      default:
+        return "border-gray-200 bg-gray-50 text-gray-700";
+    }
   };
 
-  /* =====================================================
+  /* =========================================================
+     UPDATE STATUS
+  ========================================================= */
+
+  const handleStatusChange = (
+    orderId: string,
+    status: string
+  ) => {
+    const validStatus =
+      statuses.find(
+        (item) => item === status
+      );
+
+    if (!validStatus) {
+      return;
+    }
+
+    updateOrderStatus(
+      orderId,
+      validStatus
+    );
+  };
+
+  /* =========================================================
      PAGE
-  ===================================================== */
+  ========================================================= */
 
   return (
     <main className="min-h-screen bg-[#FFF8F2]">
 
-      {/* =================================================
+      {/* =====================================================
           HEADER
-      ================================================= */}
+      ===================================================== */}
 
       <header className="border-b border-gray-200 bg-white">
 
@@ -231,15 +202,15 @@ export default function AdminOrdersPage() {
 
       </header>
 
-      {/* =================================================
+      {/* =====================================================
           CONTENT
-      ================================================= */}
+      ===================================================== */}
 
       <section className="mx-auto max-w-7xl px-6 py-10">
 
-        {/* =================================================
+        {/* ===================================================
             SUMMARY CARDS
-        ================================================= */}
+        =================================================== */}
 
         <div className="mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
 
@@ -354,11 +325,11 @@ export default function AdminOrdersPage() {
 
             <div className="flex items-center gap-3">
 
-              <div className="rounded-xl bg-blue-50 p-3">
+              <div className="rounded-xl bg-purple-50 p-3">
 
                 <Package
                   size={22}
-                  className="text-blue-600"
+                  className="text-purple-600"
                 />
 
               </div>
@@ -387,9 +358,9 @@ export default function AdminOrdersPage() {
 
         </div>
 
-        {/* =================================================
+        {/* ===================================================
             SEARCH + FILTER
-        ================================================= */}
+        =================================================== */}
 
         <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
 
@@ -408,7 +379,9 @@ export default function AdminOrdersPage() {
                 type="text"
                 value={search}
                 onChange={(event) =>
-                  setSearch(event.target.value)
+                  setSearch(
+                    event.target.value
+                  )
                 }
                 placeholder="Search by order ID, customer name or phone..."
                 className="w-full rounded-xl border border-gray-300 py-3 pl-11 pr-10 text-sm outline-none transition focus:border-[#7B1E3A] focus:ring-1 focus:ring-[#7B1E3A]"
@@ -417,9 +390,11 @@ export default function AdminOrdersPage() {
               {search && (
                 <button
                   type="button"
-                  onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                  onClick={() =>
+                    setSearch("")
+                  }
                   aria-label="Clear search"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                 >
                   <X size={17} />
                 </button>
@@ -427,127 +402,39 @@ export default function AdminOrdersPage() {
 
             </div>
 
-            {/* =================================================
-                CUSTOM STATUS FILTER
-            ================================================= */}
+            {/* STATUS FILTER */}
 
-            <div
-              ref={statusFilterRef}
-              className="relative w-full lg:w-64"
-            >
+            <div className="w-full lg:w-64">
 
-              <button
-                type="button"
-                onClick={() =>
-                  setStatusFilterOpen(
-                    !statusFilterOpen
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(
+                    event.target
+                      .value as
+                      | OrderStatus
+                      | "All"
                   )
                 }
-                aria-haspopup="listbox"
-                aria-expanded={statusFilterOpen}
-                className="flex w-full items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-left text-sm font-medium transition hover:border-[#7B1E3A] focus:border-[#7B1E3A] focus:outline-none"
+                className="w-full cursor-pointer rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 outline-none transition focus:border-[#7B1E3A] focus:ring-1 focus:ring-[#7B1E3A]"
               >
 
-                <span>
-                  {statusFilter === "All"
-                    ? "All Statuses"
-                    : statusFilter}
-                </span>
+                <option value="All">
+                  All Statuses
+                </option>
 
-                <ChevronDown
-                  size={18}
-                  className={`text-gray-500 transition-transform ${
-                    statusFilterOpen
-                      ? "rotate-180"
-                      : ""
-                  }`}
-                />
+                {statuses.map(
+                  (status) => (
+                    <option
+                      key={status}
+                      value={status}
+                    >
+                      {status}
+                    </option>
+                  )
+                )}
 
-              </button>
-
-              {statusFilterOpen && (
-                <div
-                  role="listbox"
-                  className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
-                >
-
-                  {/* ALL */}
-
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={
-                      statusFilter === "All"
-                    }
-                    onClick={() => {
-                      setStatusFilter("All");
-                      setStatusFilterOpen(false);
-                    }}
-                    className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition ${
-                      statusFilter === "All"
-                        ? "bg-[#FFF0F4] font-semibold text-[#7B1E3A]"
-                        : "text-gray-700 hover:bg-[#FFF8F2]"
-                    }`}
-                  >
-
-                    <span>
-                      All Statuses
-                    </span>
-
-                    {statusFilter === "All" && (
-                      <span className="font-bold text-[#7B1E3A]">
-                        ✓
-                      </span>
-                    )}
-
-                  </button>
-
-                  {/* STATUSES */}
-
-                  {statuses.map((status) => {
-
-                    const isSelected =
-                      statusFilter === status;
-
-                    return (
-                      <button
-                        key={status}
-                        type="button"
-                        role="option"
-                        aria-selected={
-                          isSelected
-                        }
-                        onClick={() => {
-                          setStatusFilter(
-                            status
-                          );
-                          setStatusFilterOpen(
-                            false
-                          );
-                        }}
-                        className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition ${
-                          isSelected
-                            ? "bg-[#FFF0F4] font-semibold text-[#7B1E3A]"
-                            : "text-gray-700 hover:bg-[#FFF8F2]"
-                        }`}
-                      >
-
-                        <span>
-                          {status}
-                        </span>
-
-                        {isSelected && (
-                          <span className="font-bold text-[#7B1E3A]">
-                            ✓
-                          </span>
-                        )}
-
-                      </button>
-                    );
-                  })}
-
-                </div>
-              )}
+              </select>
 
             </div>
 
@@ -597,9 +484,9 @@ export default function AdminOrdersPage() {
 
         </div>
 
-        {/* =================================================
+        {/* ===================================================
             ORDERS TABLE
-        ================================================= */}
+        =================================================== */}
 
         <div className="rounded-2xl bg-white shadow-sm">
 
@@ -690,199 +577,148 @@ export default function AdminOrdersPage() {
 
                 <tbody>
 
-                  {filteredOrders.map((order) => {
+                  {filteredOrders.map(
+                    (order) => {
 
-                    const totalItems =
-                      order.items.reduce(
-                        (sum, item) =>
-                          sum + item.quantity,
-                        0
-                      );
+                      const totalItems =
+                        order.items.reduce(
+                          (sum, item) =>
+                            sum +
+                            item.quantity,
+                          0
+                        );
 
-                    const orderDate =
-                      new Date(
-                        order.createdAt
-                      ).toLocaleDateString(
-                        "en-IN",
-                        {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        }
-                      );
+                      const orderDate =
+                        new Date(
+                          order.createdAt
+                        ).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          }
+                        );
 
-                    const isStatusOpen =
-                      openOrderStatus ===
-                      order.id;
+                      return (
 
-                    return (
+                        <tr
+                          key={order.id}
+                          className="border-b border-gray-100 last:border-0 hover:bg-[#FFF8F2]"
+                        >
 
-                      <tr
-                        key={order.id}
-                        className="border-b border-gray-100 last:border-0 hover:bg-[#FFF8F2]"
-                      >
+                          {/* ORDER */}
 
-                        {/* ORDER */}
+                          <td className="px-6 py-5">
 
-                        <td className="px-6 py-5">
+                            <p className="font-semibold text-[#7B1E3A]">
+                              #{order.id}
+                            </p>
 
-                          <p className="font-semibold text-[#7B1E3A]">
-                            #{order.id}
-                          </p>
+                            <p className="mt-1 text-xs text-gray-500">
+                              {orderDate}
+                            </p>
 
-                          <p className="mt-1 text-xs text-gray-500">
-                            {orderDate}
-                          </p>
+                          </td>
 
-                        </td>
+                          {/* CUSTOMER */}
 
-                        {/* CUSTOMER */}
+                          <td className="px-6 py-5">
 
-                        <td className="px-6 py-5">
+                            <p className="font-medium text-gray-800">
+                              {
+                                order
+                                  .customer
+                                  .fullName
+                              }
+                            </p>
 
-                          <p className="font-medium text-gray-800">
-                            {order.customer.fullName}
-                          </p>
+                            <p className="mt-1 text-xs text-gray-500">
+                              {
+                                order
+                                  .customer
+                                  .phone
+                              }
+                            </p>
 
-                          <p className="mt-1 text-xs text-gray-500">
-                            {order.customer.phone}
-                          </p>
+                          </td>
 
-                        </td>
+                          {/* ITEMS */}
 
-                        {/* ITEMS */}
+                          <td className="px-6 py-5">
+                            {totalItems}
+                          </td>
 
-                        <td className="px-6 py-5">
-                          {totalItems}
-                        </td>
+                          {/* TOTAL */}
 
-                        {/* TOTAL */}
+                          <td className="px-6 py-5 font-semibold">
+                            ₹
+                            {order.total.toLocaleString(
+                              "en-IN"
+                            )}
+                          </td>
 
-                        <td className="px-6 py-5 font-semibold">
-                          ₹
-                          {order.total.toLocaleString(
-                            "en-IN"
-                          )}
-                        </td>
+                          {/* =================================================
+                              STATUS DROPDOWN
+                          ================================================= */}
 
-                        {/* =================================================
-                            CUSTOM ORDER STATUS
-                        ================================================= */}
+                          <td className="px-6 py-5">
 
-                        <td className="px-6 py-5">
-
-                          <div className="relative w-40">
-
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-
-                                setOpenOrderStatus(
-                                  isStatusOpen
-                                    ? null
-                                    : order.id
-                                );
-                              }}
-                              className={`flex w-full items-center justify-between rounded-xl border px-4 py-2 text-sm font-semibold outline-none transition ${getStatusClasses(
+                            <select
+                              value={
+                                order.status
+                              }
+                              onChange={(
+                                event
+                              ) =>
+                                handleStatusChange(
+                                  order.id,
+                                  event.target
+                                    .value
+                                )
+                              }
+                              className={`cursor-pointer rounded-xl border px-4 py-2 text-sm font-semibold outline-none transition ${getStatusClasses(
                                 order.status
                               )}`}
                             >
 
-                              <span>
-                                {order.status}
-                              </span>
+                              {statuses.map(
+                                (status) => (
+                                  <option
+                                    key={status}
+                                    value={status}
+                                  >
+                                    {status}
+                                  </option>
+                                )
+                              )}
 
-                              <ChevronDown
-                                size={16}
-                                className={`transition-transform ${
-                                  isStatusOpen
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
-                              />
+                            </select>
 
-                            </button>
+                          </td>
 
-                            {isStatusOpen && (
-                              <div
-                                className="absolute left-0 top-full z-[60] mt-2 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
-                                onMouseDown={(event) =>
-                                  event.stopPropagation()
-                                }
-                              >
+                          {/* ACTION */}
 
-                                {statuses.map(
-                                  (status) => {
+                          <td className="px-6 py-5 text-right">
 
-                                    const isSelected =
-                                      order.status ===
-                                      status;
+                            <Link
+                              href={`/orders/${order.id}`}
+                              className="inline-flex items-center gap-2 rounded-lg border border-[#7B1E3A] px-3 py-2 text-sm font-medium text-[#7B1E3A] transition hover:bg-[#7B1E3A] hover:text-white"
+                            >
 
-                                    return (
-                                      <button
-                                        key={status}
-                                        type="button"
-                                        onClick={() => {
-                                          updateOrderStatus(
-                                            order.id,
-                                            status
-                                          );
+                              <Eye size={16} />
 
-                                          setOpenOrderStatus(
-                                            null
-                                          );
-                                        }}
-                                        className={`flex w-full items-center justify-between px-4 py-3 text-left text-sm transition ${
-                                          isSelected
-                                            ? "bg-[#FFF0F4] font-semibold text-[#7B1E3A]"
-                                            : "text-gray-700 hover:bg-[#FFF8F2]"
-                                        }`}
-                                      >
+                              View
 
-                                        <span>
-                                          {status}
-                                        </span>
+                            </Link>
 
-                                        {isSelected && (
-                                          <span className="font-bold text-[#7B1E3A]">
-                                            ✓
-                                          </span>
-                                        )}
+                          </td>
 
-                                      </button>
-                                    );
-                                  }
-                                )}
+                        </tr>
 
-                              </div>
-                            )}
-
-                          </div>
-
-                        </td>
-
-                        {/* ACTION */}
-
-                        <td className="px-6 py-5 text-right">
-
-                          <Link
-                            href={`/orders/${order.id}`}
-                            className="inline-flex items-center gap-2 rounded-lg border border-[#7B1E3A] px-3 py-2 text-sm font-medium text-[#7B1E3A] transition hover:bg-[#7B1E3A] hover:text-white"
-                          >
-
-                            <Eye size={16} />
-
-                            View
-
-                          </Link>
-
-                        </td>
-
-                      </tr>
-
-                    );
-                  })}
+                      );
+                    }
+                  )}
 
                 </tbody>
 
