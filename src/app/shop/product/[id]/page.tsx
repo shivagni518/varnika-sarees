@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
+  useEffect,
   useState,
   useSyncExternalStore,
 } from "react";
@@ -20,9 +21,12 @@ import {
 
 import { useProductStore } from "@/store/productStore";
 import { useCartStore } from "@/store/cartStore";
+import { useAuthStore } from "@/store/authStore";
+import { toast } from "sonner";
 
 export default function ProductDetailsPage() {
   const params = useParams();
+  const router = useRouter();
 
   const id = Number(params.id);
 
@@ -40,6 +44,21 @@ export default function ProductDetailsPage() {
       useProductStore.persist.hasHydrated(),
     () => false
   );
+
+  /* =========================================
+     AUTH HYDRATION
+  ========================================= */
+
+  const authHasHydrated = useAuthStore(
+    (state) => state.hasHydrated
+  );
+
+  useEffect(() => {
+    if (!authHasHydrated) {
+      useAuthStore.persist.rehydrate();
+    }
+  }, [authHasHydrated]);
+
 
   /* =========================================
      PRODUCT
@@ -180,15 +199,72 @@ export default function ProductDetailsPage() {
   };
 
   /* =========================================
+     LOGIN REDIRECT
+  ========================================= */
+
+  const goToLogin = () => {
+    const currentPath =
+      `${window.location.pathname}${window.location.search}`;
+
+    router.push(
+      `/login?redirect=${encodeURIComponent(currentPath)}`
+    );
+  };
+
+  /* =========================================
+     CHECK CUSTOMER LOGIN
+  ========================================= */
+
+  const requireCustomerLogin = async () => {
+    if (!authHasHydrated) {
+      await useAuthStore.persist.rehydrate();
+    }
+
+    const auth = useAuthStore.getState();
+
+    /*
+     * Only registered/logged-in customers can
+     * add products to the cart.
+     */
+    if (
+      !auth.isAuthenticated ||
+      !auth.user ||
+      auth.user.role !== "customer"
+    ) {
+      toast.error("Login Required", {
+        description:
+          "Please login or create an account before adding products to your cart.",
+      });
+
+      goToLogin();
+      return false;
+    }
+
+    return true;
+  };
+
+  /* =========================================
      ADD TO CART
   ========================================= */
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (product.stock <= 0) {
       return;
     }
 
+    const allowed =
+      await requireCustomerLogin();
+
+    if (!allowed) {
+      return;
+    }
+
     addToCart(product, quantity);
+
+    toast.success("Added to Cart", {
+      description:
+        `${quantity} × ${product.name}`,
+    });
 
     setShowCartModal(true);
   };
@@ -581,9 +657,16 @@ export default function ProductDetailsPage() {
 
               <button
                 type="button"
-                onClick={() =>
-                  setWishlist(!wishlist)
-                }
+                onClick={async () => {
+                  const allowed =
+                    await requireCustomerLogin();
+
+                  if (!allowed) {
+                    return;
+                  }
+
+                  setWishlist((current) => !current);
+                }}
                 aria-label={
                   wishlist
                     ? "Remove from wishlist"

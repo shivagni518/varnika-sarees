@@ -13,7 +13,6 @@ import {
 import { Product } from "@/types/product";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
-
 import { toast } from "sonner";
 
 type ProductCardProps = {
@@ -25,10 +24,6 @@ export default function ProductCard({
 }: ProductCardProps) {
   const router = useRouter();
 
-  /* =========================================================
-     WISHLIST
-  ========================================================= */
-
   const toggleWishlist = useWishlistStore(
     (state) => state.toggleWishlist
   );
@@ -38,82 +33,67 @@ export default function ProductCard({
       state.isWishlisted(product.id)
   );
 
-  /* =========================================================
-     AUTHENTICATION
-  ========================================================= */
-
-  const isAuthenticated = useAuthStore(
-    (state) => state.isAuthenticated
+  const authHasHydrated = useAuthStore(
+    (state) => state.hasHydrated
   );
 
-  /* =========================================================
-     LOGIN REQUIRED
-  ========================================================= */
+  const goToLogin = () => {
+    const currentPath =
+      `${window.location.pathname}${window.location.search}`;
 
-  const requireLogin = () => {
-    toast.error("Login Required", {
-      description:
-        "Please login or create an account to continue.",
-      action: {
-        label: "Login",
-        onClick: () => {
-          router.push(
-            `/login?redirect=${encodeURIComponent(
-              window.location.pathname
-            )}`
-          );
-        },
-      },
-    });
+    router.push(
+      `/login?redirect=${encodeURIComponent(currentPath)}`
+    );
   };
 
-  /* =========================================================
-     WISHLIST
-  ========================================================= */
+  const handleWishlist = async () => {
+    if (!authHasHydrated) {
+      await useAuthStore.persist.rehydrate();
+    }
 
-  const handleWishlist = () => {
-    if (!isAuthenticated) {
-      requireLogin();
+    const auth = useAuthStore.getState();
+
+    if (
+      !auth.isAuthenticated ||
+      !auth.user ||
+      auth.user.role !== "customer"
+    ) {
+      toast.error("Login Required", {
+        description:
+          "Please login or create an account before using the wishlist.",
+      });
+
+      goToLogin();
       return;
     }
 
+    const wasWishlisted =
+      useWishlistStore
+        .getState()
+        .isWishlisted(product.id);
+
     toggleWishlist(product);
 
-    if (isWishlisted) {
-      toast.success("Removed from Wishlist", {
+    toast.success(
+      wasWishlisted
+        ? "Removed from Wishlist"
+        : "Added to Wishlist",
+      {
         description: product.name,
-      });
-    } else {
-      toast.success("Added to Wishlist", {
-        description: product.name,
-      });
-    }
+      }
+    );
   };
-
-  /* =========================================================
-     UI
-  ========================================================= */
 
   return (
     <div className="group overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
 
-      {/* =================================================
-          IMAGE
-      ================================================= */}
-
       <div className="relative h-80 overflow-hidden">
-
-        {/* DISCOUNT */}
 
         {product.discount > 0 && (
           <span className="absolute left-3 top-3 z-20 rounded-full bg-[#7B1E3A] px-3 py-1 text-xs font-semibold text-white">
             {product.discount}% OFF
           </span>
         )}
-
-        {/* =================================================
-            WISHLIST
-        ================================================= */}
 
         <button
           type="button"
@@ -123,7 +103,7 @@ export default function ProductCard({
               ? "Remove from wishlist"
               : "Add to wishlist"
           }
-          className="absolute right-3 top-3 z-20 rounded-full bg-white p-2 shadow-md transition hover:bg-red-50"
+          className="absolute right-3 top-3 z-30 rounded-full bg-white p-2 shadow-md transition hover:bg-red-50"
         >
           <Heart
             size={18}
@@ -134,10 +114,6 @@ export default function ProductCard({
             }
           />
         </button>
-
-        {/* =================================================
-            PRODUCT IMAGE
-        ================================================= */}
 
         <Link
           href={`/shop/product/${product.id}`}
@@ -153,10 +129,6 @@ export default function ProductCard({
           />
         </Link>
 
-        {/* =================================================
-            QUICK VIEW
-        ================================================= */}
-
         <Link
           href={`/shop/product/${product.id}`}
           className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 opacity-0 transition group-hover:opacity-100"
@@ -166,16 +138,9 @@ export default function ProductCard({
             Quick View
           </span>
         </Link>
-
       </div>
 
-      {/* =================================================
-          PRODUCT DETAILS
-      ================================================= */}
-
       <div className="space-y-3 p-5">
-
-        {/* NAME + FABRIC */}
 
         <Link
           href={`/shop/product/${product.id}`}
@@ -192,12 +157,7 @@ export default function ProductCard({
           </p>
         </Link>
 
-        {/* =================================================
-            RATING
-        ================================================= */}
-
         <div className="flex items-center gap-1">
-
           <Star
             size={15}
             fill="#FACC15"
@@ -211,37 +171,21 @@ export default function ProductCard({
           <span className="text-sm text-gray-400">
             ({product.reviews})
           </span>
-
         </div>
-
-        {/* =================================================
-            PRICE
-        ================================================= */}
 
         <div className="flex flex-wrap items-center gap-3">
-
           <span className="text-2xl font-bold text-[#7B1E3A]">
             ₹
-            {product.price.toLocaleString(
-              "en-IN"
-            )}
+            {product.price.toLocaleString("en-IN")}
           </span>
 
-          {product.originalPrice >
-            product.price && (
+          {product.originalPrice > product.price && (
             <span className="text-sm text-gray-400 line-through">
               ₹
-              {product.originalPrice.toLocaleString(
-                "en-IN"
-              )}
+              {product.originalPrice.toLocaleString("en-IN")}
             </span>
           )}
-
         </div>
-
-        {/* =================================================
-            VIEW PRODUCT
-        ================================================= */}
 
         <Link
           href={`/shop/product/${product.id}`}
@@ -249,9 +193,7 @@ export default function ProductCard({
         >
           View Product
         </Link>
-
       </div>
-
     </div>
   );
 }
