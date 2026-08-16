@@ -364,7 +364,10 @@ export default function AdminPage() {
 
             {/* CUSTOMERS */}
 
-            <div className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+            <Link
+              href="/admin/customers"
+              className="group rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg sm:p-6"
+            >
 
               <div className="flex items-center justify-between">
 
@@ -377,6 +380,11 @@ export default function AdminPage() {
 
                 </div>
 
+                <ArrowRight
+                  size={20}
+                  className="text-gray-400 transition group-hover:translate-x-1 group-hover:text-[#7B1E3A]"
+                />
+
               </div>
 
               <h3 className="mt-5 text-lg font-bold text-gray-900">
@@ -384,11 +392,10 @@ export default function AdminPage() {
               </h3>
 
               <p className="mt-1 text-sm text-gray-500">
-                Customer management will be available
-                when we connect the database.
+                View and manage registered customers.
               </p>
 
-            </div>
+            </Link>
 
           </div>
 
