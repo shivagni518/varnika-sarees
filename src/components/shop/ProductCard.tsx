@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import {
   Heart,
@@ -11,6 +12,9 @@ import {
 
 import { Product } from "@/types/product";
 import { useWishlistStore } from "@/store/wishlistStore";
+import { useAuthStore } from "@/store/authStore";
+
+import { toast } from "sonner";
 
 type ProductCardProps = {
   product: Product;
@@ -19,6 +23,12 @@ type ProductCardProps = {
 export default function ProductCard({
   product,
 }: ProductCardProps) {
+  const router = useRouter();
+
+  /* =========================================================
+     WISHLIST
+  ========================================================= */
+
   const toggleWishlist = useWishlistStore(
     (state) => state.toggleWishlist
   );
@@ -27,6 +37,62 @@ export default function ProductCard({
     (state) =>
       state.isWishlisted(product.id)
   );
+
+  /* =========================================================
+     AUTHENTICATION
+  ========================================================= */
+
+  const isAuthenticated = useAuthStore(
+    (state) => state.isAuthenticated
+  );
+
+  /* =========================================================
+     LOGIN REQUIRED
+  ========================================================= */
+
+  const requireLogin = () => {
+    toast.error("Login Required", {
+      description:
+        "Please login or create an account to continue.",
+      action: {
+        label: "Login",
+        onClick: () => {
+          router.push(
+            `/login?redirect=${encodeURIComponent(
+              window.location.pathname
+            )}`
+          );
+        },
+      },
+    });
+  };
+
+  /* =========================================================
+     WISHLIST
+  ========================================================= */
+
+  const handleWishlist = () => {
+    if (!isAuthenticated) {
+      requireLogin();
+      return;
+    }
+
+    toggleWishlist(product);
+
+    if (isWishlisted) {
+      toast.success("Removed from Wishlist", {
+        description: product.name,
+      });
+    } else {
+      toast.success("Added to Wishlist", {
+        description: product.name,
+      });
+    }
+  };
+
+  /* =========================================================
+     UI
+  ========================================================= */
 
   return (
     <div className="group overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
@@ -51,9 +117,7 @@ export default function ProductCard({
 
         <button
           type="button"
-          onClick={() =>
-            toggleWishlist(product)
-          }
+          onClick={handleWishlist}
           aria-label={
             isWishlisted
               ? "Remove from wishlist"
@@ -117,7 +181,6 @@ export default function ProductCard({
           href={`/shop/product/${product.id}`}
           className="block"
         >
-
           <h3 className="text-lg font-semibold text-gray-900 transition hover:text-[#7B1E3A]">
             {product.name}
           </h3>
@@ -127,7 +190,6 @@ export default function ProductCard({
             {" • "}
             {product.occasion}
           </p>
-
         </Link>
 
         {/* =================================================
